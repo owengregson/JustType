@@ -8,4 +8,5 @@ as a fun way to practice eyeballing the design of a website and re-creating it m
 I worked for long enough that I just decided to recreate the entire website. Here we are!
 
 ### Made in completely *raw javascript, CSS, and HTML.*
+### Designed entirely through eyeballing it. Never looked at CSS for inspiration!
 ### No typescript, Node.js, SASS, Pug, web development toolkit, nothing.
