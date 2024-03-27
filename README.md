@@ -9,6 +9,8 @@
 <li>Theme Changer</li>
 <li>Nice Animations</li>
 <li>Customizable Settings (WIP)</li>
+<li>LocalStorage saving/loading</li>
+<li>Sound effects</li>
 <li>AntiCheat (WIP)</li>
 <li>More to come?</li>
 </ul>
