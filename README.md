@@ -3,6 +3,15 @@
 </p>
 <h1 align="center">JustType</h1>
 <p>A customizable, open-source typing test game with just the right amount of features.</p>
+<p>Notable Features:</p>
+<ul>
+<li>Minimal Design</li>
+<li>Theme Changer</li>
+<li>Nice Animations</li>
+<li>Customizable Settings (WIP)</li>
+<li>AntiCheat (WIP)</li>
+<li>More to come?</li>
+</ul>
 <h2 id="this-project-started-out">This project started out</h2>
 <p>as a fun way to practice eyeballing the design of a website and re-creating it myself. <em>cough</em> monkeytype <em>cough</em>.</p>
 <h2 id="but-eventually-">But eventually,</h2>
