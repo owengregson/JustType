@@ -32,19 +32,25 @@ body {
 	--pBtm: 2rem;
 	--pLft: 6rem;
 	--pRgt: 6rem;
-	padding-top: var(--pTop);
-	padding-bottom: var(--pBtm);
-	padding-left: var(--pLft);
-	padding-right: var(--pRgt);
-	min-height: calc(100vh - var(--pTop) - var(--pBtm));
-	justify-content: center;
-	margin: 0;
-	display: grid;
-	grid-auto-flow: row;
-	gap: 2rem;
-	align-items: center;
-	grid-template-rows: auto 1fr auto;
-	align-content: center;
+    display: grid;
+    grid-template-rows: auto 1fr auto; /* Ensures header, main content, and footer */
+    grid-template-columns: 100%; /* Ensures content takes full width */
+    gap: 2rem;
+    padding-top: var(--pTop);
+    padding-bottom: var(--pBtm);
+    padding-left: var(--pLft);
+    padding-right: var(--pRgt);
+    min-height: calc(100vh - var(--pTop) - var(--pBtm));
+    align-items: center;
+    justify-content: center;
+}
+
+main {
+	width: 100%; /* Ensure it takes the full width of its parent */
+    display: flex; /* Use flexbox to manage the content */
+    flex-direction: column; /* Stack children vertically */
+    align-items: stretch; /* Stretch children to match the container's width */
+    justify-content: center; /* Center content vertically if needed */
 }
 
 footer {
@@ -335,6 +341,7 @@ header #logo .text .top {
 	/*padding-top: calc(var(--font-size) / 2);
 	margin-top: calc(-1* (var(--font-size) / 2));*/
 }
+
 .wordsContainerBlur {
 	content: "";
 	position: absolute;
