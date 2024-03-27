@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<script src="./scripts/ac.js"></script>
+		<script src="./scripts/ac.min.js"></script>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>JustType | Type simply.</title>
+		<link
+			rel="stylesheet"
+			id="theme"
+			href="./styles/themes/serika_dark.css"
+		/>
+		<link rel="stylesheet" href="./styles/style.css" />
+		<script src="./scripts/howler.core.min.js"></script>
+		<script src="./scripts/game.js"></script>
+		<script src="./scripts/init.min.js"></script>
+	</head>
+	<noscript>
+		<style type="text/css">
+			#allContent {
+				display: none;
+				opacity: 0;
+			}
+		</style>
+		<div class="noscriptmsg">
+			<div style="display: block; align-content: center">
+				<h1 style="color: var(--text-color)">JustType</h1>
+				<p style="color: var(--text-color)">
+					This website is built with JavaScript. Please enable
+					JavaScript in your browser settings.
+				</p>
+			</div>
+		</div>
+	</noscript>
+	<body id="allContent" class="transition" oncontextmenu="return false">
+		<div id="loading">
+			<div class="loader transition"></div>
+			<div class="loadStageTwo">
+				<span class="loaderBar">
+					<div class="loaderBarFill"></div>
+				</span>
+				<div class="loadText">Loading...</div>
+			</div>
+		</div>
+		<div id="bannerCenter"></div>
+		<div id="contentWrapper">
+			<header class="">
+				<a id="logo" href="/" router-link="">
+					<div class="icon">
+						.i
+					</div>
+					<h1 class="text">
+						<!--<div class="top" style="padding-left:5px;">chill out,</div>-->
+						JustType
+					</h1>
+				</a>
+				<nav></nav>
+			</header>
+			<main id="gameContainer">
+				<div id="themeSelection" style="opacity: 0">
+					<label for="themePicker" class="statistic">Theme:</label>
+					<select id="themePicker" onchange="changeTheme()"></select>
+				</div>
+				<div id="testConfig">
+					<div class="row">
+						<div class="puncAndNum" style="opacity: 1">
+							<div class="textButton transition punctuationMode">
+								<div
+									class="svg-icon transition"
+									data-svg-src="./images/at.svg"
+								></div>
+								<p>punctuation</p>
+							</div>
+							<div class="textButton transition numbersMode">
+								<div
+									class="svg-icon transition"
+									data-svg-src="./images/hashtag.svg"
+								></div>
+								<p>numbers</p>
+							</div>
+						</div>
+						<div class="spacer leftSpacer"></div>
+						<div class="mode">
+							<div class="textButton transition" mode="time">
+								<div
+									class="svg-icon transition"
+									data-svg-src="./images/stopwatch.svg"
+								></div>
+								<p>time</p>
+							</div>
+							<div
+								class="textButton transition active"
+								mode="words"
+							>
+								<div
+									class="svg-icon transition"
+									data-svg-src="./images/font.svg"
+								></div>
+								<p>words</p>
+							</div>
+							<div class="textButton transition" mode="quote">
+								<div
+									class="svg-icon transition"
+									data-svg-src="./images/quote-left.svg"
+								></div>
+								<p>quote</p>
+							</div>
+							<div class="textButton transition" mode="zen">
+								<div
+									class="svg-icon transition"
+									data-svg-src="./images/mountain.svg"
+								></div>
+								<p>zen</p>
+							</div>
+							<div class="textButton transition" mode="custom">
+								<div
+									class="svg-icon transition"
+									data-svg-src="./images/wrench.svg"
+								></div>
+								<p>custom</p>
+							</div>
+						</div>
+						<div class="spacer rightSpacer"></div>
+						<div class="wordCount">
+							<div class="textButton" wordcount="10">
+								<span>10</span>
+							</div>
+							<div class="textButton active" wordcount="25">
+								<span>25</span>
+							</div>
+							<div class="textButton" wordcount="50">
+								<span>50</span>
+							</div>
+							<div class="textButton" wordcount="100">
+								<span>100</span>
+							</div>
+							<div class="textButton" wordcount="custom">
+								<i class="fas fa-fw fa-tools"></i>
+							</div>
+						</div>
+						<div
+							class="spacer rightSpacer"
+							style="display: none"
+						></div>
+						<div class="time" style="display: none">
+							<div class="textButton" timeconfig="15">
+								<span>15</span>
+							</div>
+							<div class="textButton active" timeconfig="30">
+								<span>30</span>
+							</div>
+							<div class="textButton" timeconfig="60">
+								<span>60</span>
+							</div>
+							<div class="textButton" timeconfig="120">
+								<span>120</span>
+							</div>
+							<div class="textButton" timeconfig="custom">
+								<i class="fas fa-fw fa-tools"></i>
+							</div>
+						</div>
+						<div
+							class="spacer rightSpacer"
+							style="display: none"
+						></div>
+						<div class="quoteLength" style="display: none">
+							<div class="textButton" quotelength="-1">all</div>
+							<div class="textButton" quotelength="0">short</div>
+							<div class="textButton" quotelength="1">medium</div>
+							<div class="textButton" quotelength="2">long</div>
+							<div class="textButton" quotelength="3">thicc</div>
+							<div class="textButton favorite" quotelength="-3">
+								<i class="fas fa-heart"></i>
+							</div>
+							<div class="textButton" quotelength="-2">
+								<i class="fas fa-search"></i>
+							</div>
+						</div>
+						<div
+							class="spacer rightSpacer"
+							style="display: none"
+						></div>
+					</div>
+				</div>
+				<div id="sessionProgress">
+					<span id="wordsCompleted" class="statistic transition"
+						>0/0</span
+					>
+					<div id="wordsPerMinute" class="statistic transition">
+						0 wpm
+					</div>
+					<div class="fire">
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+						<div class="particle"></div>
+					</div>
+					<div id="combo" class="statistic transition">Combo: 0x</div>
+				</div>
+				<div id="gameContentHolder">
+					<div id="wordsContainer"></div>
+					<div
+						class="wordsContainerBlur"
+						id="wordsContainerBlur-bottom"
+					></div>
+					<div
+						class="wordsContainerBlur"
+						id="wordsContainerBlur-top"
+					></div>
+				</div>
+				<div id="caret" class="default hidden"></div>
+			</main>
+			<footer>
+				<div class="leftright">
+					<div class="left">
+						<button class="textButton" id="contactPopupButton">
+							<i class="fas fa-fw fa-envelope"></i>
+							<div class="text">contact</div>
+						</button>
+						<button id="supportMeButton" class="textButton">
+							<i class="fas fa-fw fa-donate"></i>
+							<div class="text">support</div>
+						</button>
+						<a
+							href="https://github.com/owengregson/JustType"
+							class="textButton"
+							target="_blank"
+							rel="noreferrer noopener"
+						>
+							<i class="fas fa-fw fa-code"></i>
+							<div class="text">github</div>
+						</a>
+					</div>
+					<div class="right">
+						<button
+							class="current-theme textButton"
+							aria-label="Shift-click to toggle custom theme"
+							data-balloon-pos="left"
+						>
+							<i class="fas fa-fw fa-palette"></i>
+							<div class="text">pick theme</div>
+						</button>
+						<button class="currentVersion textButton">
+							<i class="fas fa-fw fa-code-branch"></i>
+							<div class="text">v1.0</div>
+						</button>
+					</div>
+				</div>
+			</footer>
+		</div>
+	</body>
+</html>
