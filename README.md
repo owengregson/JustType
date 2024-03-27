@@ -1,4 +1,7 @@
-<img src="jtt.svg"></img><h1 id="justtype">JustType</h1>
+<p align="center">
+  <img src="./jtt.svg" width="100" height="100">
+</p>
+<h1 align="center">JustType</h1>
 <p>A customizable, open-source typing test game with just the right amount of features.</p>
 <h2 id="this-project-started-out">This project started out</h2>
 <p>as a fun way to practice eyeballing the design of a website and re-creating it myself. <em>cough</em> monkeytype <em>cough</em>.</p>
