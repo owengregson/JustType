@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./jtt.svg" width="100" height="100">
+  <img src="./resources/jtt.png" width="100" height="100">
 </p>
 <h1 align="center">JustType</h1>
 <p>A customizable, open-source typing test game with just the right amount of features.</p>
