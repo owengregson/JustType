@@ -13,6 +13,7 @@
 		/>
 		<link rel="stylesheet" href="./styles/style.css" />
 		<script src="./scripts/howler.core.min.js"></script>
+		<script src="./scripts/debug.js"></script>
 		<script src="./scripts/game.js"></script>
 		<script src="./scripts/init.min.js"></script>
 	</head>
@@ -34,7 +35,7 @@
 		</div>
 	</noscript>
 	<body id="allContent" class="transition" oncontextmenu="return false">
-		<div id="loading">
+		<overlay id="loading">
 			<div class="loader transition"></div>
 			<div class="loadStageTwo">
 				<span class="loaderBar">
@@ -42,14 +43,29 @@
 				</span>
 				<div class="loadText">Loading...</div>
 			</div>
-		</div>
+		</overlay>
 		<div id="bannerCenter"></div>
-		<div id="contentWrapper">
-			<header class="">
-				<a id="logo" href="/" router-link="">
-					<div class="icon">
-						.i
+		<overlay id="modals">
+			<modal id="themeModal">
+				<div class="modalContent">
+					<div class="modalHeader">
+						<div
+							class="svg-icon transition"
+							data-svg-src="./images/magnifying-glass.svg"
+						></div>
+						<input type="text" placeholder="Search..." oninput="filterContent(this.value)"></input>
 					</div>
+					<div class="modalBody">
+						<div id="themeChooser">
+						</div>
+					</div>
+				</div>
+			</modal>
+		</overlay>
+		<div id="contentWrapper">
+			<header class="unfocus">
+				<a id="logo" href="/" router-link="">
+					<div class="icon">.i</div>
 					<h1 class="text">
 						<!--<div class="top" style="padding-left:5px;">chill out,</div>-->
 						JustType
@@ -58,11 +74,11 @@
 				<nav></nav>
 			</header>
 			<main id="gameContainer">
-				<div id="themeSelection" style="opacity: 0">
+				<div id="tsl" style="opacity: 0">
 					<label for="themePicker" class="statistic">Theme:</label>
 					<select id="themePicker" onchange="changeTheme()"></select>
 				</div>
-				<div id="testConfig">
+				<div id="testConfig" class="unfocus">
 					<div class="row">
 						<div class="puncAndNum" style="opacity: 1">
 							<div class="textButton transition punctuationMode">
@@ -257,38 +273,64 @@
 				</div>
 				<div id="caret" class="default hidden"></div>
 			</main>
-			<footer>
+			<footer class="unfocus">
 				<div class="leftright">
 					<div class="left">
-						<button class="textButton" id="contactPopupButton">
-							<i class="fas fa-fw fa-envelope"></i>
+						<a
+							href="https://github.com/owengregson/"
+							class="textButton"
+							target="_blank"
+							rel="noreferrer noopener"
+						>
+							<div
+								class="svg-icon transition"
+								data-svg-src="./images/envelope.svg"
+							></div>
 							<div class="text">contact</div>
-						</button>
-						<button id="supportMeButton" class="textButton">
-							<i class="fas fa-fw fa-donate"></i>
-							<div class="text">support</div>
-						</button>
+						</a>
 						<a
 							href="https://github.com/owengregson/JustType"
 							class="textButton"
 							target="_blank"
 							rel="noreferrer noopener"
 						>
-							<i class="fas fa-fw fa-code"></i>
+							<div
+								class="svg-icon transition"
+								data-svg-src="./images/money-bill-1-wave.svg"
+							></div>
+							<div class="text">support</div>
+						</a>
+						<a
+							href="https://github.com/owengregson/JustType"
+							class="textButton"
+							target="_blank"
+							rel="noreferrer noopener"
+						>
+							<div
+								class="svg-icon transition"
+								data-svg-src="./images/code.svg"
+							></div>
 							<div class="text">github</div>
 						</a>
 					</div>
 					<div class="right">
 						<button
 							class="current-theme textButton"
+							id="changeTheme"
 							aria-label="Shift-click to toggle custom theme"
 							data-balloon-pos="left"
 						>
-							<i class="fas fa-fw fa-palette"></i>
-							<div class="text">pick theme</div>
+							<div
+								class="svg-icon transition"
+								data-svg-src="./images/palette.svg"
+							></div>
+							<div id="themeSelection" class="text">pick theme</div>
 						</button>
 						<button class="currentVersion textButton">
-							<i class="fas fa-fw fa-code-branch"></i>
+							<div
+								class="svg-icon transition"
+								data-svg-src="./images/code-branch.svg"
+							></div>
 							<div class="text">v1.0</div>
 						</button>
 					</div>

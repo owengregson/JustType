@@ -21,6 +21,14 @@ let WPMstarter;
 let comboTimeoutBegin;
 let comboTimeoutLoop;
 let comboTimeoutStop;
+let auto = false;
+let alwaysCorrect = false;
+let bannerExists = false;
+let lastBannerTimestamp = 0;
+let timeSinceLastBanner = 0;
+let isActiveTyping = false;
+let timeSinceLoading = 0;
+let finishedLoadingTime = 0;
 const defaultSettings = {
 	testSettings: {
 		puncAndNum: {
@@ -59,7 +67,7 @@ const defaultSettings = {
 		},
 	},
 	theme: "serika-dark",
-	wordKind: "english_default",
+	wordKind: "english",
 };
 function randomRange(min, max) {
 	// get a random float (if there is decimals in the min/max) or a random int (if there is no decimals) within the min and max
@@ -83,7 +91,6 @@ const PrintTypes = {
 		color: "#000",
 	},
 };
-window.auto = false;
 window.loadText = "Loading page...";
 window.loadProgress = 0;
 function print(printType, text) {
@@ -162,48 +169,47 @@ function initGame() {
 		print(PrintTypes.INFO, "Initializing game...");
 		window.loadText = "Initializing configuration...";
 		window.loadProgress += 10;
-		document.querySelectorAll(".svg-icon").forEach(async function (elem) {
-			const svgSrc = elem.getAttribute("data-svg-src");
-			const response = await fetch(svgSrc);
-			const svgText = await response.text();
-			elem.innerHTML = svgText;
-		});
 		print(PrintTypes.INFO, "Adding event listeners...");
 		window.loadText = "Adding event listeners...";
 		window.loadProgress += 10;
-		document.querySelectorAll(".textButton").forEach(async function (tb) {
-			// on click, remove class active from other options and add .actidfveghjkl;hfdsdfghjk to this one
-			tb.addEventListener("click", function () {
-				// dynamically check all textButtons in the same parent
-				let parent = tb.parentElement;
-				let textButtons = parent.querySelectorAll(".textButton");
-				let foundMode = false;
-				textButtons.forEach(function (tb) {
-					// if all of the class names doesn't contain mode
-					let classesArray = Array.from(tb.classList);
-					for (let i = 0; i < classesArray.length; i++) {
-						if (classesArray[i].toLowerCase().includes("mode")) {
-							foundMode = true;
-							break;
+		document
+			.getElementById("testConfig")
+			.querySelectorAll(".textButton")
+			.forEach(async function (tb) {
+				// on click, remove class active from other options and add .actidfveghjkl;hfdsdfghjk to this one
+				tb.addEventListener("click", function () {
+					// dynamically check all textButtons in the same parent
+					let parent = tb.parentElement;
+					let textButtons = parent.querySelectorAll(".textButton");
+					let foundMode = false;
+					textButtons.forEach(function (tb) {
+						// if all of the class names doesn't contain mode
+						let classesArray = Array.from(tb.classList);
+						for (let i = 0; i < classesArray.length; i++) {
+							if (
+								classesArray[i].toLowerCase().includes("mode")
+							) {
+								foundMode = true;
+								break;
+							}
 						}
+						if (!foundMode) tb.classList.remove("active");
+					});
+					// if you are clicking the same one and foundMode is true, remove active
+					if (tb.classList.contains("active") && foundMode) {
+						tb.classList.remove("active");
+					} else {
+						tb.classList.add("active");
 					}
-					if (!foundMode) tb.classList.remove("active");
+					print(PrintTypes.INFO, "Settings Updated");
+					changeSettings();
+					newTest();
 				});
-				// if you are clicking the same one and foundMode is true, remove active
-				if (tb.classList.contains("active") && foundMode) {
-					tb.classList.remove("active");
-				} else {
-					tb.classList.add("active");
-				}
-				print(PrintTypes.INFO, "Settings Updated");
-				changeSettings();
-				newTest();
+				print(
+					PrintTypes.SUCCESS,
+					"Added EventListener to textButton " + tb.innerText.trim()
+				);
 			});
-			print(
-				PrintTypes.SUCCESS,
-				"Added EventListener to textButton " + tb.innerText.trim()
-			);
-		});
 		print(PrintTypes.SUCCESS, "Successfully added event listeners!");
 
 		window.loadText = "Configuring Statistics...";
@@ -275,7 +281,27 @@ function initGame() {
 		};
 
 		// propegate the themePicker
-		addThemes();
+		addThemes().then(() => {
+			addIcons().then(() => {
+				updateThemePicker().then(() => {
+					moveCheckmark();
+				});
+			});
+		});
+
+		document
+			.getElementById("changeTheme")
+			.addEventListener("click", function () {
+				openModals();
+			});
+
+		document
+			.getElementById("modals")
+			.addEventListener("click", function (e) {
+				if (e.target === this) {
+					closeModals(); // Call the closeModals function if the background was clicked
+				}
+			});
 
 		print(PrintTypes.SUCCESS, "StatisticsBar Initialized!");
 
@@ -330,14 +356,29 @@ function initGame() {
 	document.addEventListener("mousedown", function () {
 		playSound("click");
 	});
+	finishedLoadingTime = Date.now();
 }
 
 function periodic() {
+	timeSinceLoading = Date.now() - finishedLoadingTime;
 	moveCaret();
+	timeSinceLastBanner = Date.now() - lastBannerTimestamp;
+	if (Date.now() - latestTypeTime > 2000) {
+		let oldIsActiveTyping = isActiveTyping;
+		isActiveTyping = false;
+		if (oldIsActiveTyping != isActiveTyping) {
+			print(PrintTypes.INFO, "User is no longer typing");
+			// get all the elements with class "unfocus" and start their animaiton "focus"
+			focusOff();
+		}
+	} else if (charsTyped.length > 0) {
+		isActiveTyping = true;
+	}
 }
 
 async function addThemes() {
-	let themePicker = document.getElementById("themePicker");
+	document.getElementById("modals").style.display = "none";
+	let themeChooser = document.getElementById("themeChooser");
 	const response = await fetch("./styles/themes/");
 	let text = await response.text();
 	text = text
@@ -352,17 +393,98 @@ async function addThemes() {
 		// extract the innerText
 		let innerText = element.match(/<ahref=".*?">(.*?)<\/a>/)[1];
 		// add a new option to the themePicker
-		let newOption = document.createElement("option");
-		newOption.value = href;
+		let newOption = document.createElement("div");
+		newOption.classList.add("themeOption");
+		newOption.classList.add("transition");
+		newOption.classList.add("filterable");
+		newOption.dataset.theme = href;
+		let innerIcon = document.createElement("div");
+		innerIcon.classList.add("svg-icon");
+		innerIcon.classList.add("transition");
+		innerIcon.setAttribute("data-svg-src", "./images/check.svg");
+		let innerLabel = document.createElement("div");
+		innerLabel.classList.add("themeLabel");
+		innerLabel.classList.add("transition");
 
+		newOption.appendChild(innerIcon);
+		newOption.appendChild(innerLabel);
 		// convert serika_dark -> Serika Dark
 		let formattedName = innerText.replace(/_/g, " ");
 		// capitalize the first letter of each word
 		formattedName = formattedName.replace(/\b\w/g, (l) => l.toUpperCase());
 		// replace .Css with nothing
 		formattedName = formattedName.replace(".Css", "");
-		newOption.innerText = formattedName;
-		themePicker.appendChild(newOption);
+		innerLabel.innerText = formattedName.toLowerCase();
+		themeChooser.appendChild(newOption);
+		newOption.addEventListener("click", function () {
+			// remove other selected options
+			let selectedOptions = document.querySelectorAll(
+				".themeOption.selected"
+			);
+			selectedOptions.forEach((option) => {
+				option.classList.remove("selected");
+			});
+			newOption.classList.add("selected");
+			window.settings.theme = href;
+			setTheme(href);
+			moveCheckmark();
+			pushSettings();
+			closeModals();
+		});
+	});
+}
+
+async function updateThemePicker() {
+	const themeChooser = document.getElementById("themeChooser");
+	const selectedTheme = window.settings.theme;
+	const themeOptions = themeChooser.querySelectorAll(".themeOption");
+	themeOptions.forEach((option) => {
+		if (option.dataset.theme == selectedTheme) {
+			option.classList.add("selected");
+		}
+	});
+}
+
+async function moveCheckmark() {
+	const themeChooser = document.getElementById("themeChooser");
+	// hide all checkmarks but the selected one
+	let selectedOption = themeChooser.querySelector(".themeOption.selected");
+	let checkmarks = themeChooser.querySelectorAll(".svg-icon");
+	// remove all checkmarks whose parent is not a themeOption
+	checkmarks.forEach((checkmark) => {
+		if (!checkmark.parentElement.classList.contains("themeOption")) {
+			checkmark.remove();
+		}
+	});
+	checkmarks.forEach((checkmark) => {
+		checkmark.style.opacity = 0;
+	});
+	let selectedCheckmark = selectedOption.querySelector(".svg-icon");
+	selectedCheckmark.style.opacity = 1;
+	// change the innerText of the element called "themeSelection" button by finding the innerText of the selected themeOption
+	const themeSelection = document.getElementById("themeSelection");
+	themeSelection.innerText = selectedOption.innerText;
+}
+
+function filterContent(searchTerm) {
+	const elements = document.querySelectorAll(".filterable"); // Change '.filterable' to the class or selector of the items you want to filter
+	elements.forEach((element) => {
+		if (
+			element.textContent.toLowerCase().includes(searchTerm.toLowerCase())
+		) {
+			element.style.display = ""; // Show the element
+		} else {
+			element.style.display = "none"; // Hide the element
+		}
+	});
+}
+
+async function addIcons() {
+	document.querySelectorAll(".svg-icon").forEach(async function (elem) {
+		const svgSrc = elem.getAttribute("data-svg-src");
+		const response = await fetch(svgSrc);
+		const svgText = await response.text();
+		elem.innerHTML = svgText;
 	});
 }
 
@@ -402,10 +524,11 @@ function loadSettings() {
 			print(PrintTypes.SUCCESS, "Loaded settings successfully.");
 			window.settings = potentialSettings;
 		}
+	} else {
+		print(PrintTypes.ERROR, "No settings found, using default settings.");
+		shouldReset = true;
 	}
-	if (shouldReset) {
-		window.settings = defaultSettings;
-	}
+	if (shouldReset) window.settings = defaultSettings;
 	pushSettings();
 
 	let testConfig = document.getElementById("testConfig");
@@ -611,11 +734,24 @@ function addWords(withSettings = window.settings.testSettings) {
 	print(PrintTypes.SUCCESS, "Words Regenerated");
 }
 
-function changeTheme() {
-	let themePicker = document.getElementById("themePicker");
-	let theme = themePicker.value;
-	setTheme(theme);
-	pushSettings();
+function openModals() {
+	let modal = document.querySelector("#modals");
+	modal.style.display = "grid";
+	modal.style.animation = "fadeIn 0.2s";
+	modal.addEventListener("animationend", function () {
+		modal.style.animation = "none";
+		modal.style.display = "grid";
+	});
+}
+
+function closeModals() {
+	let modal = document.querySelector("#modals");
+	modal.style.display = "grid";
+	modal.style.animation = "fadeOut 0.2s";
+	modal.addEventListener("animationend", function () {
+		modal.style.animation = "none";
+		modal.style.display = "none";
+	});
 }
 
 async function updateFavicon() {
@@ -670,9 +806,17 @@ function setTheme(themeKind = "/styles/themes/serika_dark.css") {
 	}, 15);
 }
 
-function createBanner(text, colorKind = "good", isClosable = true) {
-	if (window.bannerExists) return;
-	window.bannerExists = true;
+function createBanner(
+	text = "Example Text",
+	colorKind = "good",
+	isClosable = false,
+	dismissTime = 2000
+) {
+	if (bannerExists) return;
+	if (timeSinceLastBanner < 1000) return;
+	dismissTime = dismissTime < 10 ? 10 : dismissTime;
+	dismissTime = isClosable ? -1 : dismissTime;
+	bannerExists = true;
 	let banner = document.createElement("div");
 	banner.classList.add("banner", colorKind);
 	let container = document.createElement("div");
@@ -683,18 +827,24 @@ function createBanner(text, colorKind = "good", isClosable = true) {
 	container.appendChild(textElement);
 	const bannerCenter = document.getElementById("bannerCenter");
 
+	function dismissBanner() {
+		if (!bannerExists) return;
+		lastBannerTimestamp = Date.now();
+		bannerCenter.style.top = `-${banner.offsetHeight}px`; // Move banner out of view
+		adjustContentWrapperPadding(0);
+		bannerCenter.addEventListener("transitionend", function () {
+			try {
+				bannerCenter.removeChild(banner);
+				bannerExists = false;
+			} catch (e) {}
+		});
+	}
+
 	if (isClosable) {
 		let closeButton = document.createElement("i");
-		closeButton.classList.add("fas", "fa-fw", "fa-times");
+		closeButton.classList.add("closeButton", "fas", "fa-fw", "fa-times");
 		closeButton.addEventListener("click", function () {
-			bannerCenter.style.top = `-${banner.offsetHeight}px`; // Move banner out of view
-			adjustContentWrapperPadding(0);
-			bannerCenter.addEventListener("transitionend", function () {
-				try {
-					bannerCenter.removeChild(banner);
-					window.bannerExists = false;
-				} catch (e) {}
-			});
+			dismissBanner();
 		});
 		container.appendChild(closeButton);
 	}
@@ -732,6 +882,13 @@ function createBanner(text, colorKind = "good", isClosable = true) {
 		bannerCenter.style.transition = "top 0.2s ease-out";
 		bannerCenter.style.top = "0px"; // Move banner into view
 		adjustContentWrapperPadding(banner.offsetHeight);
+		bannerCenter.addEventListener("transitionend", function () {
+			if (dismissTime > 0) {
+				setTimeout(() => {
+					dismissBanner();
+				}, dismissTime);
+			}
+		});
 	}, 3); // Delay to ensure the initial top position is applied
 }
 
@@ -739,10 +896,14 @@ function createBanner(text, colorKind = "good", isClosable = true) {
 // Ensure #bannerCenter has position: fixed and is initially placed out of view using top property in CSS.
 // Adjust #contentWrapper padding-top dynamically in JavaScript as shown above.
 
-function getSettingsPreference(key) {
-	for (let category in window.settings.testSettings[key])
-		if (window.settings.testSettings[key][category]) return category;
+function getSettingsPreference(
+	key,
+	settingsObject = window.settings.testSettings
+) {
+	for (let category in settingsObject[key])
+		if (settingsObject[key][category]) return category;
 }
+
 function getChars() {
 	const words = document.querySelectorAll("word");
 	return Array.from(words).reduce((acc, word) => {
@@ -752,18 +913,18 @@ function getChars() {
 }
 
 function typeWords() {
-	if (window.auto) return;
-	window.auto = true;
+	if (auto) return;
+	auto = true;
 	const timePerKey = 43;
-	const chars = getChars();
-	for (let i = 0; i < chars.length; i++) {
+	const amountOfCharsLeft = getChars().length;
+	for (let i = 0; i < amountOfCharsLeft; i++) {
 		setTimeout(() => {
-			handleKeyPress({ key: chars[i] });
+			simulateCorrectKeypress();
 		}, i * timePerKey);
 	}
 	setTimeout(() => {
-		window.auto = false;
-	}, chars.length * timePerKey);
+		auto = false;
+	}, amountOfCharsLeft * timePerKey);
 }
 
 function beginFireLoop() {
@@ -897,25 +1058,41 @@ function playSound(kind) {
 		if (kind == "wpm_pulse") {
 			volume = 0.2; // 0.2
 			soundPitch = randomRange(0.97, 1.16);
-			playType=1;
+			playType = 1;
 		}
 		if (kind == "incorrect") volume = 1;
 	} else if (kind == "complete_word") {
 		soundIndex = Math.round(randomRange(1, 3));
 		soundPitch = randomRange(0.88, 1.14);
-		volume = 0.5; // 0.7
+		volume = 0.5; // 0.5
 		playType = 1;
 	} else if (kind.includes("combo")) {
 		// combo_1 to combo_8
 		// replace _(number) with ""
-		soundIndex = kind.slice(-1);
-		kind = kind.replace(/_\d/g, "");
-		soundPitch = 1;
-		volume = 0.6;
+		soundIndex = kind.slice(-2);
+		if (soundIndex.includes("_")) {
+			soundIndex = kind.slice(-1);
+		}
+		console.log("\n\n\nsoundindex: " + soundIndex + "\n\n\n");
+		if (soundIndex > 8) {
+			soundPitch = 0.7 + 0.042 * soundIndex;
+			soundIndex = 8;
+			print(PrintTypes.ERROR, "PUTCH: " + soundPitch);
+		} else {
+			soundPitch = 1;
+		}
+		console.log("\n\n\nNew: " + soundIndex + "\n\n\n");
+		if (soundPitch > 1) {
+			kind = "combo";
+		} else {
+			kind = kind.replace(/_\d/g, "");
+		}
+		playType = 1;
+		volume = 0.6; // 0.6
 	} else if (kind == "click") {
 		soundIndex = 1;
 		soundPitch = randomRange(0.75, 1.1);
-		console.log("PITCH: " + soundPitch)
+		console.log("PITCH: " + soundPitch);
 		volume = 0.4;
 		playType = 1;
 	} else if (kind == "notification") {
@@ -925,6 +1102,7 @@ function playSound(kind) {
 		playType = 0;
 	}
 	const url = `./sounds/${kind}_${soundIndex}.wav`;
+	console.log(`\n${url}\n`);
 	if (playType == 0) {
 		audio = new Audio(url);
 		audio.volume = volume;
@@ -946,7 +1124,7 @@ function comboMusic(state = "start") {
 	if (state == "start") {
 		window.comboMusicOn = true;
 		audio = new Audio(`./sounds/combo_mode_enter_1.wav`);
-		audio.volume = 0.4;
+		audio.volume = 0; // 0.4
 		audio.playbackRate = 1;
 		audio.play();
 		// wait until sound finishes playing then play the loop
@@ -957,7 +1135,7 @@ function comboMusic(state = "start") {
 		// check if it's already playing
 		window.comboMusicOn = true;
 		window.combo_loop.currentTime = 0;
-		window.combo_loop.volume = 0.4;
+		window.combo_loop.volume = 0; // 0.4
 		window.combo_loop.playbackRate = 1;
 		window.combo_loop.play();
 		comboTimeoutLoop = setTimeout(() => {
@@ -976,7 +1154,7 @@ function comboMusic(state = "start") {
 		}
 		window.combo_loop.loop = false;
 		audio = new Audio(`./sounds/combo_mode_exit_1.wav`);
-		audio.volume = 0.4;
+		audio.volume = 0; // 0.4
 		audio.playbackRate = 1;
 		audio.play();
 	}
@@ -990,145 +1168,211 @@ function stopComboMusic() {
 	comboMusic("stop");
 }
 
+function focusOn() {
+	const aTime = 0.2;
+	const unfocusElements = document.querySelectorAll(".unfocus");
+	unfocusElements.forEach((element) => {
+		element.style.opacity = 1;
+		element.style.animation = `unfocus ${aTime.toString()}s`;
+		setTimeout(() => {
+			//element.addEventListener("animationend", function () {
+			element.style.opacity = 0;
+			element.style.animation = "none";
+		}, aTime * 1000 - 50);
+	});
+}
+
+function focusOff() {
+	const aTime = 0.2;
+	let unfocusElements = document.querySelectorAll(".unfocus");
+	unfocusElements.forEach((element) => {
+		element.style.opacity = 0;
+		element.style.animation = `focus ${aTime.toString()}s`;
+		setTimeout(() => {
+			element.style.opacity = 1;
+			element.style.animation = "none";
+		}, aTime * 1000 - 50);
+	});
+}
+
 function handleKeyPress(e) {
 	if (!window.enabled) return;
 	let human = false;
+	let doesOverlayExist;
+	for (let overlay of document.querySelectorAll("overlay")) {
+		if (overlay.style.display != "none") {
+			doesOverlayExist = true;
+		}
+	}
+	if (doesOverlayExist) {
+		if (e.key == "Escape") {
+			closeModals();
+		}
+		return;
+	}
 	try {
 		e.preventDefault();
 		human = true;
 	} catch (e) {
 		human = false;
 	}
-	if (human && window.auto) return;
-	print(PrintTypes.INFO, 'Key Triggered: "' + e.key + '"');
-	const words = document.querySelectorAll("word");
-	const currentWord = words[currentWordIndex];
-	const chars = currentWord.querySelectorAll("letter");
-	if (!beginWordTimestamp || beginWordTimestamp == 0) {
-		beginWordTimestamp = Date.now();
-	}
-	charsTyped.push(e.key);
-	charsWithTimestamps.push({
-		char: e.key,
-		timestamp: Date.now(),
-	});
-	// if it's any of the modifier keys, arrow keys return
-	if (
-		e.key === "Shift" ||
-		e.key === "Control" ||
-		e.key === "Alt" ||
-		e.key === "Meta" ||
-		e.key === "ArrowLeft" ||
-		e.key === "ArrowRight" ||
-		e.key === "ArrowUp" ||
-		e.key === "ArrowDown"
-	)
-		return;
 	if (e.key === "Tab" || e.key === "Escape") {
 		newTest();
 		return;
 	}
-	if (e.key === "+") {
-		typeWords();
+	if (e.key === "_") {
+		alwaysCorrect = !alwaysCorrect;
 		return;
 	}
-	if (e.key === "Backspace") {
-		if (currentCharIndex > 0) {
-			// check if we are deleting an excess char
-			if (
-				chars[currentCharIndex - 1].classList.contains(
-					"incorrect-excess"
-				)
-			) {
-				currentWord.removeChild(chars[currentCharIndex - 1]);
-			}
-			playSound("correct");
-			currentCharIndex--;
-			chars[currentCharIndex].classList.remove("correct", "incorrect");
-		}
-		return;
-	}
-	if (e.key === chars[currentCharIndex]?.textContent) {
-		playSound("correct");
-		chars[currentCharIndex].classList.add("correct");
-		currentCharIndex++;
-		if (
-			currentCharIndex >= chars.length &&
-			currentWordIndex < words.length - 1
-		) {
-			if (
-				charsTyped.join("").replace(" ", "") ==
-				currentWord.textContent.trim()
-			) {
-				combo++;
-				charsTyped = [];
-			} else {
-				combo = 0;
-				charsTyped = [];
-			}
-			finishedWordTimestamp = Date.now();
-			timeToCompleteThisWord = finishedWordTimestamp - beginWordTimestamp;
-			wpmPerWord.push(60000 / timeToCompleteThisWord);
-
-			beginWordTimestamp = 0;
-
-			if (timeToCompleteThisWord > 4000) {
-				// reset the WPM if the user takes more than 10 seconds to type a word
-				startTime = Date.now();
-			}
-			if (timeToCompleteThisWord > 1000) {
-				combo = 0;
-			}
-			if (combo > 5) {
-				idPulse("combo");
-				document.getElementById("combo").textContent = `Combo: ${
-					combo - 5
-				}x`;
-				const sound = combo - 5 > 8 ? 8 : combo - 6;
-				if (!window.comboMusicOn) startComboMusic();
-				playSound("combo_" + sound);
-			} else {
-				playSound("complete_word");
-			}
-			// add "completed" class to the word
-			currentWord.classList.add("completed");
-			currentWordIndex++;
-			currentCharIndex = 0;
-		}
+	if (human && alwaysCorrect) {
+		const correctKey =
+			document.querySelectorAll("word")[currentWordIndex].textContent[
+				currentCharIndex
+			];
+		handleKeyPress({ key: correctKey });
 	} else {
-		if (combo != 0) idPulse("combo");
-		document.getElementById("combo").textContent = `Combo: 0x`;
-		combo = 0;
-		playSound("incorrect");
-		// check if we're at the end of the word
+		if (human && auto) return;
+		print(PrintTypes.INFO, 'Key Triggered: "' + e.key + '"');
+		const words = document.querySelectorAll("word");
+		const currentWord = words[currentWordIndex];
+		const chars = currentWord.querySelectorAll("letter");
+		if (!beginWordTimestamp || beginWordTimestamp == 0) {
+			beginWordTimestamp = Date.now();
+		}
+		charsTyped.push(e.key);
+		charsWithTimestamps.push({
+			char: e.key,
+			timestamp: Date.now(),
+		});
+		// if it's any of the modifier keys, arrow keys return
 		if (
-			currentCharIndex < chars.length &&
-			!(chars[currentCharIndex].textContent === " ")
-		) {
-			chars[currentCharIndex].classList.add("incorrect");
+			e.key === "Shift" ||
+			e.key === "Control" ||
+			e.key === "Alt" ||
+			e.key === "Meta" ||
+			e.key === "ArrowLeft" ||
+			e.key === "ArrowRight" ||
+			e.key === "ArrowUp" ||
+			e.key === "ArrowDown"
+		)
+			return;
+		if (e.key === "+") {
+			typeWords();
+			return;
+		}
+
+		if (!isActiveTyping) {
+			print(PrintTypes.INFO, "User is now typing");
+			focusOn();
+		}
+
+		if (e.key === "Backspace") {
+			if (currentCharIndex > 0) {
+				// check if we are deleting an excess char
+				if (
+					chars[currentCharIndex - 1].classList.contains(
+						"incorrect-excess"
+					)
+				) {
+					currentWord.removeChild(chars[currentCharIndex - 1]);
+				}
+				playSound("correct");
+				currentCharIndex--;
+				chars[currentCharIndex].classList.remove(
+					"correct",
+					"incorrect"
+				);
+			}
+			return;
+		}
+		if (e.key === chars[currentCharIndex]?.textContent) {
+			playSound("correct");
+			chars[currentCharIndex].classList.add("correct");
 			currentCharIndex++;
-		} /* else {
+			if (
+				currentCharIndex >= chars.length &&
+				currentWordIndex < words.length - 1
+			) {
+				if (
+					charsTyped.join("").replace(" ", "") ==
+					currentWord.textContent.trim()
+				) {
+					combo++;
+					charsTyped = [];
+				} else {
+					combo = 0;
+					charsTyped = [];
+				}
+				finishedWordTimestamp = Date.now();
+				timeToCompleteThisWord =
+					finishedWordTimestamp - beginWordTimestamp;
+				wpmPerWord.push(60000 / timeToCompleteThisWord);
+
+				beginWordTimestamp = 0;
+
+				if (timeToCompleteThisWord > 4000) {
+					// reset the WPM if the user takes more than 10 seconds to type a word
+					startTime = Date.now();
+				}
+				if (timeToCompleteThisWord > 1000) {
+					combo = 0;
+				}
+				if (combo > 5) {
+					idPulse("combo");
+					document.getElementById("combo").textContent = `Combo: ${
+						combo - 5
+					}x`;
+					let sound = 0;
+					if (combo - 5 > 8) {
+						sound = 8;
+					} else {
+						sound = combo - 6;
+					}
+					if (!window.comboMusicOn) startComboMusic();
+					playSound("combo_" + sound);
+				} else {
+					playSound("complete_word");
+				}
+				// add "completed" class to the word
+				currentWord.classList.add("completed");
+				currentWordIndex++;
+				currentCharIndex = 0;
+			}
+		} else {
+			if (combo != 0) idPulse("combo");
+			document.getElementById("combo").textContent = `Combo: 0x`;
+			combo = 0;
+			playSound("incorrect");
+			// check if we're at the end of the word
+			if (
+				currentCharIndex < chars.length &&
+				!(chars[currentCharIndex].textContent === " ")
+			) {
+				chars[currentCharIndex].classList.add("incorrect");
+				currentCharIndex++;
+			} /* else {
                 let extraIncorrectChar = document.createElement('span');
                 extraIncorrectChar.classList.add('char', 'incorrect-excess');
                 extraIncorrectChar.textContent = e.key;
                 currentWord.appendChild(extraIncorrectChar);
                 currentCharIndex++;
             }*/
-		// penalize the charWithTimestamps by subtracting from the first timestamp
-		charsWithTimestamps[0].timestamp -= 200;
+			// penalize the charWithTimestamps by subtracting from the first timestamp
+			charsWithTimestamps[0].timestamp -= 200;
+		}
+		clearTimeout(typingTimeout); // Clear the timeout on key press
+		const caret = document.getElementById("caret");
+		caret.style.opacity = 1; // Make caret solid on key press
+		caret.style.animation = "none"; // Stop flashing animation
+
+		updateStatistics();
+		moveCaret();
+
+		typingTimeout = setTimeout(() => {
+			caret.style.opacity = 1;
+			caret.style.animation = "caretFlashSmooth 1s infinite";
+		}, 1000);
 	}
-	clearTimeout(typingTimeout); // Clear the timeout on key press
-	const caret = document.getElementById("caret");
-	caret.style.opacity = 1; // Make caret solid on key press
-	caret.style.animation = "none"; // Stop flashing animation
-
-	updateStatistics();
-	moveCaret();
-
-	typingTimeout = setTimeout(() => {
-		caret.style.opacity = 1;
-		caret.style.animation = "caretFlashSmooth 1s infinite";
-	}, 1000);
 }
 
 function moveCaret() {

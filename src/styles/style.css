@@ -32,25 +32,25 @@ body {
 	--pBtm: 2rem;
 	--pLft: 6rem;
 	--pRgt: 6rem;
-    display: grid;
-    grid-template-rows: auto 1fr auto; /* Ensures header, main content, and footer */
-    grid-template-columns: 100%; /* Ensures content takes full width */
-    gap: 2rem;
-    padding-top: var(--pTop);
-    padding-bottom: var(--pBtm);
-    padding-left: var(--pLft);
-    padding-right: var(--pRgt);
-    min-height: calc(100vh - var(--pTop) - var(--pBtm));
-    align-items: center;
-    justify-content: center;
+	display: grid;
+	grid-template-rows: auto 1fr auto; /* Ensures header, main content, and footer */
+	grid-template-columns: 100%; /* Ensures content takes full width */
+	gap: 2rem;
+	padding-top: var(--pTop);
+	padding-bottom: var(--pBtm);
+	padding-left: var(--pLft);
+	padding-right: var(--pRgt);
+	min-height: calc(100vh - var(--pTop) - var(--pBtm));
+	align-items: center;
+	justify-content: center;
 }
 
 main {
 	width: 100%; /* Ensure it takes the full width of its parent */
-    display: flex; /* Use flexbox to manage the content */
-    flex-direction: column; /* Stack children vertically */
-    align-items: stretch; /* Stretch children to match the container's width */
-    justify-content: center; /* Center content vertically if needed */
+	display: flex; /* Use flexbox to manage the content */
+	flex-direction: column; /* Stack children vertically */
+	align-items: stretch; /* Stretch children to match the container's width */
+	justify-content: center; /* Center content vertically if needed */
 }
 
 footer {
@@ -124,7 +124,7 @@ header {
 	position: absolute;
 	top: -2.4em;
 	width: 100%;
-	z-index: 1000;
+	z-index: 3;
 	transition: top 0.3s cubic-bezier(0.16, 0.56, 0.39, 1);
 }
 
@@ -162,7 +162,7 @@ header {
 
 #bannerCenter .banner .container .closeButton {
 	cursor: pointer;
-	transition: 0.125s;
+	transition: 0.3s;
 	font-size: 1.4rem;
 }
 
@@ -256,6 +256,7 @@ header #logo .text .top {
 	animation: rotation 1s linear infinite;
 	opacity: 1;
 }
+
 @keyframes rotation {
 	0% {
 		transform: rotate(0deg);
@@ -288,7 +289,8 @@ header #logo .text .top {
 		width: 100%;
 	}
 }
-#loading {
+
+overlay {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -299,10 +301,107 @@ header #logo .text .top {
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background-color: var(--bg-color);
-	color: var(--text-color);
 	transition: all 0.32s cubic-bezier(0.16, 0.56, 0.39, 1);
 }
+
+#loading {
+	background-color: var(--bg-color);
+	color: var(--text-color);
+}
+
+@keyframes fadeIn {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+@keyframes fadeOut {
+	0% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+#modals {
+	opacity: 1;
+	background-color: rgba(0, 0, 0, 0.3);
+	display: none; /* grid */
+	align-items: center;
+	justify-content: center;
+	justify-items: center;
+	align-content: center;
+	grid-row: 1;
+	grid-column: 1;
+	grid-template-columns: 600px;
+	grid-template-rows: 0.75fr;
+}
+
+modal {
+	background-color: var(--bg-color);
+	border-radius: 0.5rem;
+	box-shadow: 0 0 0 0.2em var(--sub-alt-color);
+	color: var(--sub-color);
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+.modalHeader {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	align-items: center;
+	padding: 1.07rem;
+}
+
+input {
+	font-family: "Type", Arial, sans-serif;
+	background: var(--bg-color);
+	padding: 0 0 0 1rem;
+	color: var(--text-color);
+	border: none;
+	outline: none;
+	font-size: 1rem;
+}
+
+#themeChooser {
+	display: block;
+	overflow-y: scroll;
+	max-height: calc(100vh - 15rem);
+	display: grid;
+	cursor: pointer;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	user-select: none;
+	scrollbar-color: var(--sub-color) transparent;
+}
+
+.themeOption {
+	padding: 0.5rem 1rem;
+	font-size: 0.75rem;
+	line-height: 0.75rem;
+	color: var(--sub-color);
+	display: grid;
+	grid-template-columns: auto 1fr;
+}
+
+.themeOption:hover {
+	color: var(--bg-color) !important;
+	background: var(--text-color) !important;
+}
+
+.invisible {
+	opacity: 0;
+}
+
+.themeLabel {
+	padding-left: 1em;
+}
+
 .loadStageTwo {
 	align-items: center;
 	justify-content: center;
@@ -471,7 +570,7 @@ button.text,
 	fill: var(--sub-color); /* Or any other SVG property */
 	width: calc(var(--font-size) / 1.5); /* Adjust as needed */
 	height: calc(var(--font-size) / 1.5); /* Adjust as needed */
-	margin-bottom: calc(-1 * (var(--font-size) / 12));
+	margin-bottom: calc(-1 * (var(--font-size) / 10));
 	transition: fill 0.12s cubic-bezier(0.16, 0.56, 0.39, 1);
 }
 
@@ -817,5 +916,23 @@ button.text,
 	to {
 		opacity: 0;
 		transform: translateY(-5em) scale(0);
+	}
+}
+
+@keyframes unfocus {
+	0% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+@keyframes focus {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
 	}
 }
